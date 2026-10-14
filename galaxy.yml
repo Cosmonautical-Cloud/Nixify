@@ -1,0 +1,25 @@
+---
+namespace: cosmonautical
+name: nixify
+authors:
+  - Violet Caulfield
+version: 0.1.0
+readme: README.md
+description: >-
+  Converts Ansible/YAML/Jinja data into Nix expressions, so inventory
+  variables can be templated straight into .nix files.
+license:
+  - GPL-3.0-only
+tags:
+  - nixos
+  - nix
+  - filter
+  - infrastructure
+repository: https://github.com/Cosmonautical-Cloud/Nixify
+homepage: https://github.com/Cosmonautical-Cloud/Nixify
+issues: https://github.com/Cosmonautical-Cloud/Nixify/issues
+dependencies: {}
+# Never ship the local collection cache or galaxy-importer's local output.
+build_ignore:
+  - .ansible
+  - importer_result.json
