@@ -72,6 +72,25 @@ def test_key_quoting_for_non_identifiers():
     assert 'valid_key = 2;' in rendered
 
 
+def test_key_quoting_for_keywords():
+    value = {'in': 1, 'inherit': 2, 'input': 3}
+    rendered = to_nix(value)
+    assert '"in" = 1;' in rendered
+    assert '"inherit" = 2;' in rendered
+    assert 'input = 3;' in rendered
+
+
+def test_float_exponent_keeps_fraction():
+    assert to_nix(1e-05) == '1.0e-05'
+    assert to_nix(1e20) == '1.0e+20'
+    assert to_nix(1.5e-05) == '1.5e-05'
+
+
+def test_negative_numbers_in_lists_are_parenthesized():
+    assert to_nix([-1, 2, -0.5]) == '[\n  (-1)\n  2\n  (-0.5)\n]'
+    assert to_nix({'offset': -1}) == '{\n  offset = -1;\n}'
+
+
 def test_nix_raw_emits_verbatim():
     value = {'packages': NixRaw('with pkgs; [ vim git tmux ]')}
     expected = '{\n  packages = with pkgs; [ vim git tmux ];\n}'

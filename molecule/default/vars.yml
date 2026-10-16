@@ -1,0 +1,39 @@
+---
+# Plain data with no raw Nix in it, so `nix-instantiate --eval --json` of
+# its rendered form has to give back exactly this. Covers every type to_nix
+# handles plus the string escapes and key quoting that are easy to get wrong.
+nixify_roundtrip:
+  string: hello
+  quotes: 'say "hi"'
+  backslash: 'C:\path\to'
+  interpolation: '${HOME} and ${ builtins.currentSystem }'
+  multiline: "line one\nline two\n"
+  tab: "a\tb"
+  unicode: "héllo ✓"
+  empty_string: ""
+  integer: 42
+  negative: -7
+  float: 1.5
+  small_float: 0.00001
+  enabled: true
+  disabled: false
+  nothing: null
+  empty_attrs: {}
+  empty_list: []
+  list: [1, -2, -0.25, "three", [4], {five: 5}]
+  nested:
+    a:
+      b:
+        c: deep
+  "dotted.key": 1
+  "with space": 2
+  "1leading-digit": 3
+  hyphen-key: 4
+  "it's": 5
+  in: 6
+  inherit: 7
+  let: 8
+
+# Rendered through the __nix_raw__ sentinel, as inventory YAML would.
+nixify_raw_sentinel:
+  __nix_raw__: 'builtins.concatStringsSep "-" [ "a" "b" ]'

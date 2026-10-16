@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented here. Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this project follows [semantic versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- A Molecule scenario that runs the filters and `nix_check` against a real Nix in a `nixos/nix` container, including a roundtrip check that rendered data evaluates back to the original. Run with `./molecule.zsh`; CI runs it on every PR.
+
+### Fixed
+
+- Attribute names that are Nix keywords (`in`, `inherit`, `let`, `if`, ...) are now quoted; they were emitted bare, which doesn't parse.
+- Floats with an exponent render with a fractional part (`1.0e-05`, not `1e-05`), which Nix's float syntax requires.
+- Negative numbers inside lists are parenthesized (`[ (-1) ]`), since a list element can't be a bare unary minus.
+
 ## [0.1.0] - 2026-10-13
 
 ### Added

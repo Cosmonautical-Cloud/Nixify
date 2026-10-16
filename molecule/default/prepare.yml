@@ -1,0 +1,13 @@
+---
+# The nixos/nix image has Nix but no Python, which Ansible modules need.
+- name: Prepare
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Install Python for Ansible
+      ansible.builtin.raw: >-
+        test -x /opt/python3/bin/python3 || {
+        mkdir -p /opt &&
+        nix --extra-experimental-features 'nix-command flakes'
+        build nixpkgs#python3 --out-link /opt/python3; }
+      changed_when: true

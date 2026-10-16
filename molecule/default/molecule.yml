@@ -1,0 +1,18 @@
+---
+# Runs the filters and nix_check against a real Nix (the nixos/nix image),
+# and checks rendered output evaluates back to the data it came from.
+driver:
+  name: docker
+platforms:
+  - name: nixify
+    image: docker.io/nixos/nix:latest
+    pre_build_image: true
+    command: sleep infinity
+provisioner:
+  name: ansible
+  inventory:
+    host_vars:
+      nixify:
+        ansible_python_interpreter: /opt/python3/bin/python3
+verifier:
+  name: ansible
