@@ -1,0 +1,67 @@
+---
+- name: Verify
+  hosts: all
+  gather_facts: false
+  vars_files:
+    - vars.yml
+  tasks:
+    - name: Evaluate roundtrip.nix
+      ansible.builtin.command:
+        argv: [nix-instantiate, --eval, --strict, --json, /tmp/nixify/roundtrip.nix]
+      register: roundtrip_eval
+      changed_when: false
+
+    - name: Check it evaluates back to the original data
+      ansible.builtin.assert:
+        that:
+          - roundtrip_eval.stdout | from_json == nixify_roundtrip
+
+    - name: Evaluate raw.nix
+      ansible.builtin.command:
+        argv: [nix-instantiate, --eval, --strict, --json, /tmp/nixify/raw.nix]
+      register: raw_eval
+      changed_when: false
+
+    - name: Check raw expressions were emitted verbatim, not quoted
+      ansible.builtin.assert:
+        that:
+          - "raw_eval.stdout | from_json == {'sentinel': 'a-b', 'filter': [2, 4, 6]}"
+
+    - name: Run nix_check on invalid Nix
+      cosmonautical.nixify.nix_check:
+        content: "{ unclosed"
+      register: invalid_check
+      ignore_errors: true
+
+    - name: Check nix_check rejected it with the parser's error
+      ansible.builtin.assert:
+        that:
+          - invalid_check is failed
+          - invalid_check is not changed
+          - invalid_check.msg is search('failed to parse')
+          - invalid_check.stderr | length > 0
+
+    - name: Run nix_check in check mode
+      cosmonautical.nixify.nix_check:
+        content: "{ a = 1; }"
+      check_mode: true
+      register: check_mode_check
+
+    - name: Check nix_check still validates in check mode
+      ansible.builtin.assert:
+        that:
+          - check_mode_check is not failed
+          - check_mode_check is not changed
+
+    - name: Run nix_check without nix-instantiate available
+      cosmonautical.nixify.nix_check:
+        content: "{ a = 1; }"
+        nix_instantiate_bin: nix-instantiate-does-not-exist
+      register: missing_bin_check
+      ignore_errors: true
+
+    - name: Check nix_check fails cleanly when the binary is missing
+      ansible.builtin.assert:
+        that:
+          - missing_bin_check is failed
+          - missing_bin_check.msg is search('nix-instantiate-does-not-exist')

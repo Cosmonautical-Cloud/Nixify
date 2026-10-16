@@ -19,7 +19,9 @@ repository: https://github.com/Cosmonautical-Cloud/Nixify
 homepage: https://github.com/Cosmonautical-Cloud/Nixify
 issues: https://github.com/Cosmonautical-Cloud/Nixify/issues
 dependencies: {}
-# Never ship the local collection cache or galaxy-importer's local output.
+# Never ship the local collection cache, galaxy-importer's local output or
+# the test scenarios.
 build_ignore:
   - .ansible
+  - molecule
   - importer_result.json

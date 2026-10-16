@@ -81,6 +81,11 @@ Validates that a Nix expression parses (`nix-instantiate --parse`), either from 
     content: "{{ nixos_config | cosmonautical.nixify.to_nix }}"
 ```
 
+## Testing
+
+- `./test.zsh` runs the pytest unit tests for the conversion logic — no Ansible or Nix needed.
+- `./molecule.zsh` runs the [Molecule](https://ansible.readthedocs.io/projects/molecule/) scenario in a `nixos/nix` container: renders data covering every supported type and the tricky escapes/key quoting, then checks that `nix-instantiate --eval --json` gives back exactly the original data, that raw expressions are emitted verbatim, and how `nix_check` behaves on valid, invalid and missing-binary input. Needs Docker locally (`pip install molecule "molecule-plugins[docker]"` and `ansible-galaxy collection install community.docker`); CI runs both on every PR.
+
 ## Installing
 
 ```

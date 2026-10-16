@@ -1,0 +1,38 @@
+---
+- name: Converge
+  hosts: all
+  gather_facts: false
+  vars_files:
+    - vars.yml
+  tasks:
+    - name: Create output directory
+      ansible.builtin.file:
+        path: /tmp/nixify
+        state: directory
+        mode: '0755'
+
+    - name: Validate rendered plain data
+      cosmonautical.nixify.nix_check:
+        content: "{{ nixify_roundtrip | cosmonautical.nixify.to_nix }}"
+
+    - name: Render plain data
+      ansible.builtin.copy:
+        content: "{{ nixify_roundtrip | cosmonautical.nixify.to_nix }}\n"
+        dest: /tmp/nixify/roundtrip.nix
+        mode: '0644'
+
+    - name: Render raw expressions (sentinel key and nix_raw filter)
+      ansible.builtin.copy:
+        content: >-
+          {{ {'sentinel': nixify_raw_sentinel,
+              'filter': 'builtins.map (x: x * 2) [ 1 2 3 ]' | cosmonautical.nixify.nix_raw}
+             | cosmonautical.nixify.to_nix }}
+        dest: /tmp/nixify/raw.nix
+        mode: '0644'
+
+    - name: Validate written files by path
+      cosmonautical.nixify.nix_check:
+        path: /tmp/nixify/{{ item }}
+      loop:
+        - roundtrip.nix
+        - raw.nix

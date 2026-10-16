@@ -21,6 +21,12 @@ import re
 # alphanumerics, underscore, apostrophe or hyphen.
 _IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_'-]*$")
 
+# Nix keywords match the identifier grammar above, but are a parse error as
+# a bare attribute name - they have to be quoted.
+_KEYWORDS = frozenset([
+    'assert', 'else', 'if', 'in', 'inherit', 'let', 'or', 'rec', 'then', 'with',
+])
+
 # The single dict key that marks "emit this value's text verbatim, don't
 # quote it as a string" when authoring raw Nix straight in YAML (no Jinja
 # filter available there, since YAML alone can't construct a Python object).
@@ -67,7 +73,7 @@ def _quote_string(value):
 
 def _quote_key(key):
     key = str(key)
-    if _IDENTIFIER_RE.match(key):
+    if _IDENTIFIER_RE.match(key) and key not in _KEYWORDS:
         return key
     return _quote_string(key)
 
@@ -93,7 +99,13 @@ def to_nix(value, indent=0, indent_size=2):
         return str(value)
 
     if isinstance(value, float):
-        return repr(value)
+        text = repr(value)
+        # Python drops the fractional part before an exponent (1e-05), but
+        # Nix's float syntax requires one (1.0e-05).
+        mantissa, sep, exponent = text.partition('e')
+        if sep and '.' not in mantissa:
+            text = '%s.0e%s' % (mantissa, exponent)
+        return text
 
     if isinstance(value, str):
         return _quote_string(value)
@@ -114,6 +126,10 @@ def to_nix(value, indent=0, indent_size=2):
         lines = ['[']
         for item in value:
             rendered = to_nix(item, indent + 1, indent_size)
+            # A list element can't be a bare unary minus, so negative
+            # numbers need parentheses: [ (-1) ], not [ -1 ].
+            if isinstance(item, (int, float)) and not isinstance(item, bool) and item < 0:
+                rendered = '(%s)' % rendered
             lines.append('%s%s' % (child_pad, rendered))
         lines.append('%s]' % pad)
         return '\n'.join(lines)
